@@ -40,7 +40,7 @@ class VTReport(object):
     if file_type.upper() in SUPPORTED_FILES:
       logging.debug('[VT Report] Processing file type %s.', file_type.upper())
 
-      # Public API --------------------------------
+      # Public API Key
       dets = general.get('last_analysis_stats')
       total = dets['harmless'] + dets['malicious'] + dets['suspicious'] + dets['undetected']   
       self.detections_malicious = str(dets['malicious']) 
@@ -122,6 +122,7 @@ class VTReport(object):
       for domain in client.iterator('/files/{}/contacted_domains', file_hash, limit=20):
         self.contacted_domains[domain.id] = domain  # Object
       
+      # Private API Key      
       if self.private_api:
         for domain in client.iterator('/files/{}/embedded_domains', file_hash, limit=20):
           self.embedded_domains[domain.id] = domain  # Object
@@ -167,7 +168,7 @@ class VTReport(object):
   def get_sandbox_report(self, sandbox_name): # returns dict
     sandbox = self.behaviour[sandbox_name]
     actions_dict = {}
-    
+
     if (sandbox.get('files_opened')):
       actions_dict['Files opened'] = sandbox.get('files_opened') # list of strings
     if (sandbox.get('files_written')):
