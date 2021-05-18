@@ -104,5 +104,8 @@ venv.bak/
 .mypy_cache/
 .vscode/settings.json
 .vscode/notes.txt
-plugin/vt_ida/config.py
+plugin/virustotal/config.py
+plugin/virustotal/vt_ida/ui/vtpanel.ui
 
+.qt_for_python/rcc/vt_logo.py
+.qt_for_python/uic/vtpanel.py
