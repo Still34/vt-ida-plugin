@@ -109,3 +109,4 @@ plugin/virustotal/vt_ida/ui/vtpanel.ui
 
 .qt_for_python/rcc/vt_logo.py
 .qt_for_python/uic/vtpanel.py
+plugin/virustotal/vt_ida/ui/interface.py

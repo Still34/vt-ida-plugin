@@ -18,8 +18,70 @@ import ida_idp
 import idaapi
 import idautils
 import idc
+import ida_search
+import ida_segment
 import logging
 
+class SearchEvidence(object):
+
+  def search_text(self, content, max_results):
+    ''' A text string is reveived as a parameter '''
+    
+    addr = idc.get_inf_attr(idaapi.INF_MIN_EA)
+    list_results=[]
+    logging.debug('[VT Disassembler] Searching text: %s', content)
+
+    for i in range(0, max_results): 
+      addr = ida_search.find_text(addr, 0, 0, content, ida_search.SEARCH_DOWN)
+      result={}
+      if addr == idc.BADADDR:
+        break 
+
+      result['addr'] = addr
+      result['function_name']= idaapi.get_func_name(addr)
+      if result['function_name']:
+        function = idaapi.get_func(addr)
+        result['function_addr'] = function.start_ea
+      else:
+        result['function_addr'] = None
+      segment = ida_segment.getseg(addr)
+      result['segment']= ida_segment.get_segm_name(segment)
+      if result:
+        list_results.append(result)
+      addr = idc.next_head(addr)
+    
+    if (list_results):
+      logging.info('[VT Disassembler] Evidence FOUND!: %s', list_results)
+    return list_results
+
+  def search_bytes(self, content, max_results):
+    logging.debug('[VT Disassembler] Searching bytes: %s', content)
+
+    addr = idc.get_inf_attr(idaapi.INF_MIN_EA)
+    list_results=[]
+    
+    for i in range(0, max_results): 
+      addr = ida_search.find_binary(addr, idaapi.BADADDR, content, 16, ida_search.SEARCH_DOWN)
+      result={}
+      if addr == idc.BADADDR:
+        break
+   
+      result['addr'] = addr
+      result['function_name']= idaapi.get_func_name(addr)
+      if result['function_name']:
+        function = idaapi.get_func(addr)
+        result['function_addr'] = function.start_ea
+      else:
+        result['function_addr'] = None
+      segment = ida_segment.getseg(addr)
+      result['segment']= ida_segment.get_segm_name(segment)
+      if result:
+        list_results.append(result)
+      addr = idc.next_head(addr)
+    
+    if (list_results):
+      logging.info('[VT Disassembler] Evidence FOUND!: %s', list_results)
+    return list_results
 
 class Disassembler(object):
 
@@ -75,7 +137,7 @@ class Disassembler(object):
       mask_str = binascii.hexlify(mask).decode('utf-8')
 
     logging.debug(
-        '[VTGREP] Wildcarding: %s',
+        '[VT Disassembler] Wildcarding: %s',
         idc.generate_disasm_line(addr, 0)
         )
 
@@ -92,7 +154,7 @@ class Disassembler(object):
       current_byte += 2
       index_instr += 1
 
-    logging.debug('[VTGREP] Wildcarded: %s', pattern)
+    logging.debug('[VT Disassembler] Wildcarded: %s', pattern)
 
     return pattern
 
@@ -121,7 +183,7 @@ class Disassembler(object):
       op2_type = mnem.Op2.type
 
       logging.debug(
-          '[VTGREP] Instruction: %s  [%d, %d, %d]',
+          '[VT Disassembler] Instruction: %s  [%d, %d, %d]',
           idc.generate_disasm_line(addr, 0),
           mnem.itype,
           op1_type,

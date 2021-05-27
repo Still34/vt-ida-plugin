@@ -19,8 +19,12 @@ from idaapi import PluginForm
 from PyQt5 import QtCore, QtGui, QtWidgets
 from virustotal.vtreport import VTReport
 from virustotal.vt_ida.ui.panel import Ui_panelUI
+from virustotal import vtevidence
+from virustotal import defaults
 from datetime import datetime
 from math import ceil
+import logging
+import binascii
 
 
 class VTWidgets(object):
@@ -36,6 +40,7 @@ class VTWidgets(object):
 
 class VTPanel(PluginForm):
   vt_report = None
+  vt_evidence = None
   community_index=0
   private_api=False
 
@@ -258,8 +263,12 @@ class VTPanel(PluginForm):
       cm_out=cm_out + '<b>' + 'Ruleset Name: ' + '</b>' + yara_dict['ruleset_name'] + '<br>'
       cm_out=cm_out + '<b>' + 'Source: ' + '</b>' + yara_dict['source'] + '<br>'
       self.panel.tb_community.setText(cm_out)
+      self.panel.pb_prev_msg.setEnabled(True)
+      self.panel.pb_next_msg.setEnabled(True)
     else: 
       self.panel.tb_community.clear()
+      self.panel.pb_prev_msg.setEnabled(False)
+      self.panel.pb_next_msg.setEnabled(False)
 
   def __show_sigmas(self):
     sigmas_dict = self.vt_report.sigma_results
@@ -271,8 +280,12 @@ class VTPanel(PluginForm):
       risk_str = 'Critical: ' + str(risk_dict['critical']) + ' High: ' + str(risk_dict['high']) + ' Medium: ' + str(risk_dict['medium']) + ' Low: ' + str(risk_dict['low'])
       cm_out=cm_out + '<b>' + 'Risk: ' + '</b>' + risk_str + '<br>'
       self.panel.tb_community.setText(cm_out)
+      self.panel.pb_prev_msg.setEnabled(True)
+      self.panel.pb_next_msg.setEnabled(True)
     else:
       self.panel.tb_community.clear()
+      self.panel.pb_prev_msg.setEnabled(False)
+      self.panel.pb_next_msg.setEnabled(False)
 
   def __show_comments(self):
     comment_dict = self.vt_report.get_comments()
@@ -282,8 +295,12 @@ class VTPanel(PluginForm):
       comment = "<br />".join(comment_dict[cdate].split("\n"))
       cm_out = '<b>Date: </b>' + datetime.utcfromtimestamp(cdate).strftime('%Y-%m-%d %H:%M:%S') + '<br>' + '<b>Content: </b>' + comment 
       self.panel.tb_community.setText(cm_out)
+      self.panel.pb_prev_msg.setEnabled(True)
+      self.panel.pb_next_msg.setEnabled(True)
     else: 
       self.panel.tb_community.clear()
+      self.panel.pb_prev_msg.setEnabled(False)
+      self.panel.pb_next_msg.setEnabled(False)
 
   def __community_forward(self):
     value = str(self.panel.cb_select_source.currentText())
@@ -651,8 +668,9 @@ class VTPanel(PluginForm):
 
     ### Behaviour
     self.panel.tw_behaviour.horizontalHeader().setStyleSheet(header_stylesheet)
-    sb_keys=list(self.vt_report.list_sandboxes())
-    if sb_keys:
+
+    if self.vt_report.list_sandboxes():
+      sb_keys=list(self.vt_report.list_sandboxes())
       for key in sb_keys:
         self.panel.cb_select_sandbox.addItem(key)
       first_sndbox = sb_keys[0]
@@ -696,7 +714,136 @@ class VTPanel(PluginForm):
       self.panel.api_key_type.setText('COMMUNITY')
 
     #### Evidence Panel 
-    self.panel.tab_evidence.setEnabled(False)
+    #self.panel.tab_evidence.setEnabled(False)
+    self.panel.pb_search_code.clicked.connect(self.__search_evidence)
+
+  def __search_evidence(self):
+    flags = defaults.FLAG_SEARCH_ASCII | defaults.FLAG_SEARCH_BYTES  | defaults.FLAG_SEARCH_UTF16LE | defaults.FLAG_SEARCH_UTF8
+    ida_kernwin.show_wait_box("Looking for evidence...")
+    self.vt_evidence = vtevidence.VTEvidence(self.vt_report)
+    self.vt_evidence.clear()
+    self.panel.treew_evidence.clear()
+
+    selected_source = self.panel.cb_select_source_2.currentText()
+
+    if not ida_kernwin.user_cancelled():
+      if selected_source in ('All', 'File names submitted'):
+        ida_kernwin.replace_wait_box("Searching for evidence: file names")
+        self.vt_evidence.search_filenames(flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    if not ida_kernwin.user_cancelled():
+      if selected_source in ('All', 'Dropped files'):
+        ida_kernwin.replace_wait_box("Searching for evidence: dropped file")
+        self.vt_evidence.search_dropped_files(flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    if not ida_kernwin.user_cancelled(): 
+      if selected_source in ('All', 'Contacted observables'):
+        ida_kernwin.replace_wait_box("Searching for evidence: contacted domains")
+        self.vt_evidence.search_contacted_domains(flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    if not ida_kernwin.user_cancelled():
+      if selected_source in ('All', 'Contacted observables'):
+        ida_kernwin.replace_wait_box("Searching for evidence: contacted IPs")
+        self.vt_evidence.search_contacted_ips(flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    if not ida_kernwin.user_cancelled():
+      if selected_source in ('All', 'Contacted observables'):
+        ida_kernwin.replace_wait_box("Searching for evidence: contacted URLs")
+        self.vt_evidence.search_contacted_urls(flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    if not ida_kernwin.user_cancelled():
+      if selected_source in ('All', 'Behaviour'):
+        if self.vt_report.list_sandboxes():
+          sandbox_names=list(self.vt_report.list_sandboxes())
+          if sandbox_names:
+            for name in sandbox_names:
+              ida_kernwin.replace_wait_box("Searching for evidence: sandbox %s" % name)
+              self.vt_evidence.search_behaviour(name, flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    if not ida_kernwin.user_cancelled():
+      if self.private_api:
+        if selected_source in ('All', 'Embedded observables'):
+          ida_kernwin.replace_wait_box("Searching for evidence: embedded domains")
+          self.vt_evidence.search_embedded_domains(flags)
+        if not ida_kernwin.user_cancelled():
+          if selected_source in ('All', 'Embedded observables'):
+            ida_kernwin.replace_wait_box("Searching for evidence: embedded IPs")
+            self.vt_evidence.search_embedded_ips(flags)
+        if not ida_kernwin.user_cancelled():
+          if selected_source in ('All', 'Embedded observables'):
+            ida_kernwin.replace_wait_box("Searching for evidence: embedded URLs")
+            self.vt_evidence.search_embedded_urls(flags)
+    else:
+      logging.info('[VT Panel] Action canceled by the user.')
+
+    ida_kernwin.hide_wait_box()
+    logging.debug('[VT Panel] Search results: %s', self.vt_evidence.evidence_idb)
+
+    if self.vt_evidence.evidence_idb:
+      self.showEvidence()
+    else:
+      logging.info('[VT Panel] No evidence found.')
+
+
+  def showEvidenceGroup(self, list_evidence, source):
+      root = QtWidgets.QTreeWidgetItem(self.panel.treew_evidence)
+      root.setText(0, source)
+      for evidence in list_evidence:
+        list_addr = evidence['addresses']
+        for addr in list_addr:
+          item = QtWidgets.QTreeWidgetItem(root)
+          item.setText(0, evidence['content'])
+          addre = addr['addr']
+          hex_addr = '0x' + hex(addre)
+          item.setText(1, hex_addr)
+          item.setText(2, evidence['format'])
+
+  def showEvidence(self):
+    list_filenames = []
+    list_dropped = []
+    list_embedded = []
+    list_contacted = []
+    list_behaviour = []
+
+    for evidence in self.vt_evidence.evidence_idb:
+      if evidence['source'] == 'file names submitted':
+        list_filenames.append(evidence)
+      if evidence['source'] == 'dropped files':
+        list_dropped.append(evidence)
+      if evidence['source'] in ('embedded domains', 'embedded IPs', 'embedded URLs'):
+        list_embedded.append(evidence)
+      if evidence['source'] in ('contacted domains', 'contacted IPs', 'contacted URLs'):
+        list_contacted.append(evidence)
+      if evidence['source'] == 'behaviour':
+        list_behaviour.append(evidence)
+
+    if list_filenames:
+      self.showEvidenceGroup(list_filenames, 'File names')
+
+    if list_dropped:
+      self.showEvidenceGroup(list_dropped, 'Dropped files')
+
+    if list_embedded:
+      self.showEvidenceGroup(list_embedded, 'Embedded observables')
+
+    if list_contacted:
+      self.showEvidenceGroup(list_contacted, 'Contacted observables')
+
+    if list_behaviour:
+      self.showEvidenceGroup(list_behaviour, 'Behaviour')
+
 
   def OnClose(self, form):
     """

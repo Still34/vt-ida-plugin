@@ -25,11 +25,12 @@ import threading
 
 from virustotal import config
 from virustotal import vtgrep
-from virustotal import defaults
 from virustotal import vtreport
+from virustotal import defaults
 from virustotal.vt_ida.check_sample import CheckSample
 from virustotal.vt_ida.vtpanel import VTPanel
 from virustotal.apikey import CheckAPIKey
+
 try:
   import ConfigParser as configparser
 except ImportError:
@@ -211,7 +212,7 @@ class MenuVTPanel(idaapi.action_handler_t):
           idaapi.set_dock_pos('VirusTotal', 'IDA View-A', idaapi.DP_RIGHT)
           widget_panel.set_default_data(vt_report)
         else:
-          logging.info('[VT Report] Current file type is not supported in VTPanel.')
+          logging.info('[VT Plugin] Current file type is not supported in VTPanel.')
       else:
         logging.debug('[VT Plugin] Error setting up menu entry.')
     else:

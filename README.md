@@ -48,4 +48,3 @@ These actions will launch a new instance of your default web browser, showing al
 TBA
 
 Check IDA Pro's output window for any message that may need your attention.
-
