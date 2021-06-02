@@ -22,9 +22,39 @@ import ida_search
 import ida_segment
 import logging
 
-class SearchEvidence(object):
+class NavigateDisassembler(object):
+  
+  @staticmethod
+  def go_to_ea(str_addr):
+    ea = int(str_addr,0)
+    if ea is not None and ea is not idc.BADADDR:
+      idaapi.jumpto(ea)
+    else:
+      logging.debug('[VT Disassembler] Not valid EA: %s', str_addr)
+  
+  @staticmethod
+  def is_head(ea):
+    flags = idc.get_full_flags(ea)
+    return idc.is_head(flags)
 
-  def search_text(self, content, max_results):
+  
+  @staticmethod      
+  def is_imports(segment): 
+    if segment in ('.idata', '.rdata', '.edata' ): # Check: .dynstr, '.dynsym', __IMPORT
+      return True
+    return False
+
+class SearchEvidence(object):
+  
+  @staticmethod     
+  def __filter_address(addr, segment, source, action):
+    if ((source == 'file names' and NavigateDisassembler.is_head(addr)) or
+        (action in ('Calls highlighted', 'Modules loaded', 'Files opened') and 
+         NavigateDisassembler.is_imports(segment))):
+         return True
+    return False
+  
+  def search_text(self, content, source, action, max_results):
     ''' A text string is reveived as a parameter '''
     
     addr = idc.get_inf_attr(idaapi.INF_MIN_EA)
@@ -46,7 +76,8 @@ class SearchEvidence(object):
         result['function_addr'] = None
       segment = ida_segment.getseg(addr)
       result['segment']= ida_segment.get_segm_name(segment)
-      if result:
+
+      if result and not self.__filter_address(addr, result['segment'], source, action): 
         list_results.append(result)
       addr = idc.next_head(addr)
     
@@ -54,7 +85,7 @@ class SearchEvidence(object):
       logging.info('[VT Disassembler] Evidence FOUND!: %s', list_results)
     return list_results
 
-  def search_bytes(self, content, max_results):
+  def search_bytes(self, content, source, action, max_results):
     logging.debug('[VT Disassembler] Searching bytes: %s', content)
 
     addr = idc.get_inf_attr(idaapi.INF_MIN_EA)
@@ -75,7 +106,8 @@ class SearchEvidence(object):
         result['function_addr'] = None
       segment = ida_segment.getseg(addr)
       result['segment']= ida_segment.get_segm_name(segment)
-      if result:
+
+      if result and not self.__filter_address(addr, result['segment'], source, action):
         list_results.append(result)
       addr = idc.next_head(addr)
     

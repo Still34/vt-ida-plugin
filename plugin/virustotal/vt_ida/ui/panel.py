@@ -19,7 +19,7 @@ from virustotal.vt_ida.ui import vtlogo
 class Ui_panelUI(object):
     def setupUi(self, panelUI):
         panelUI.setObjectName("panelUI")
-        panelUI.resize(1106, 1217)
+        panelUI.resize(1106, 1486)
         panelUI.setAutoFillBackground(False)
         panelUI.setLocale(QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.UnitedStates))
         self.verticalLayout_11 = QtWidgets.QVBoxLayout(panelUI)
@@ -239,11 +239,24 @@ class Ui_panelUI(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tw_tags.sizePolicy().hasHeightForWidth())
         self.tw_tags.setSizePolicy(sizePolicy)
+        self.tw_tags.setStyleSheet("QTableWidget {\n"
+"\n"
+"    border-image: none;\n"
+"    outline: 0;\n"
+"\n"
+"}\n"
+"\n"
+"QTableWidget::item\n"
+"{\n"
+"  border: 0px;\n"
+"  padding: 5px;\n"
+"}")
         self.tw_tags.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tw_tags.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tw_tags.setProperty("showDropIndicator", False)
         self.tw_tags.setDragDropOverwriteMode(False)
-        self.tw_tags.setAlternatingRowColors(True)
+        self.tw_tags.setAlternatingRowColors(False)
+        self.tw_tags.setShowGrid(False)
         self.tw_tags.setGridStyle(QtCore.Qt.SolidLine)
         self.tw_tags.setObjectName("tw_tags")
         self.tw_tags.setColumnCount(4)
@@ -582,8 +595,8 @@ class Ui_panelUI(object):
         self.tabWidget.addTab(self.tab_analysis, "")
         self.tab_evidence = QtWidgets.QWidget()
         self.tab_evidence.setObjectName("tab_evidence")
-        self.verticalLayout_13 = QtWidgets.QVBoxLayout(self.tab_evidence)
-        self.verticalLayout_13.setObjectName("verticalLayout_13")
+        self.verticalLayout_23 = QtWidgets.QVBoxLayout(self.tab_evidence)
+        self.verticalLayout_23.setObjectName("verticalLayout_23")
         self.groupBox_9 = QtWidgets.QGroupBox(self.tab_evidence)
         self.groupBox_9.setFlat(True)
         self.groupBox_9.setObjectName("groupBox_9")
@@ -618,9 +631,6 @@ class Ui_panelUI(object):
         self.treew_evidence.setAnimated(True)
         self.treew_evidence.setWordWrap(True)
         self.treew_evidence.setObjectName("treew_evidence")
-        item_0 = QtWidgets.QTreeWidgetItem(self.treew_evidence)
-        item_1 = QtWidgets.QTreeWidgetItem(item_0)
-        item_1 = QtWidgets.QTreeWidgetItem(item_0)
         self.treew_evidence.header().setCascadingSectionResizes(True)
         self.treew_evidence.header().setDefaultSectionSize(150)
         self.treew_evidence.header().setMinimumSectionSize(120)
@@ -647,7 +657,49 @@ class Ui_panelUI(object):
         self.verticalLayout_12.addItem(spacerItem9)
         self.horizontalLayout_11.addLayout(self.verticalLayout_12)
         self.gridLayout_4.addLayout(self.horizontalLayout_11, 1, 2, 1, 1)
-        self.verticalLayout_13.addWidget(self.groupBox_9)
+        self.verticalLayout_23.addWidget(self.groupBox_9)
+        self.groupBox_11 = QtWidgets.QGroupBox(self.tab_evidence)
+        self.groupBox_11.setFlat(True)
+        self.groupBox_11.setObjectName("groupBox_11")
+        self.verticalLayout_22 = QtWidgets.QVBoxLayout(self.groupBox_11)
+        self.verticalLayout_22.setObjectName("verticalLayout_22")
+        self.verticalLayout_21 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_21.setObjectName("verticalLayout_21")
+        self.tw_behaviour_actions = QtWidgets.QTableWidget(self.groupBox_11)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tw_behaviour_actions.sizePolicy().hasHeightForWidth())
+        self.tw_behaviour_actions.setSizePolicy(sizePolicy)
+        self.tw_behaviour_actions.setStyleSheet("QTableWidget {\n"
+"\n"
+"    border-image: none;\n"
+"    outline: 0;\n"
+"\n"
+"}\n"
+"\n"
+"QTableWidget::item\n"
+"{\n"
+"  border: 0px;\n"
+"  padding: 5px;\n"
+"}")
+        self.tw_behaviour_actions.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.tw_behaviour_actions.setProperty("showDropIndicator", False)
+        self.tw_behaviour_actions.setDragDropOverwriteMode(False)
+        self.tw_behaviour_actions.setAlternatingRowColors(False)
+        self.tw_behaviour_actions.setShowGrid(False)
+        self.tw_behaviour_actions.setGridStyle(QtCore.Qt.NoPen)
+        self.tw_behaviour_actions.setRowCount(0)
+        self.tw_behaviour_actions.setColumnCount(3)
+        self.tw_behaviour_actions.setObjectName("tw_behaviour_actions")
+        self.tw_behaviour_actions.horizontalHeader().setVisible(False)
+        self.tw_behaviour_actions.horizontalHeader().setHighlightSections(False)
+        self.tw_behaviour_actions.horizontalHeader().setStretchLastSection(True)
+        self.tw_behaviour_actions.verticalHeader().setVisible(False)
+        self.tw_behaviour_actions.verticalHeader().setHighlightSections(False)
+        self.verticalLayout_21.addWidget(self.tw_behaviour_actions)
+        self.verticalLayout_22.addLayout(self.verticalLayout_21)
+        self.verticalLayout_23.addWidget(self.groupBox_11)
         self.groupBox_10 = QtWidgets.QGroupBox(self.tab_evidence)
         self.groupBox_10.setFlat(True)
         self.groupBox_10.setObjectName("groupBox_10")
@@ -698,7 +750,7 @@ class Ui_panelUI(object):
         self.verticalLayout_14.addItem(spacerItem10)
         self.horizontalLayout_12.addLayout(self.verticalLayout_14)
         self.verticalLayout_5.addLayout(self.horizontalLayout_12)
-        self.verticalLayout_13.addWidget(self.groupBox_10)
+        self.verticalLayout_23.addWidget(self.groupBox_10)
         self.tabWidget.addTab(self.tab_evidence, "")
         self.verticalLayout.addWidget(self.tabWidget)
         self.verticalLayout_11.addLayout(self.verticalLayout)
@@ -815,21 +867,13 @@ class Ui_panelUI(object):
         self.treew_evidence.headerItem().setText(0, _translate("panelUI", "Content"))
         self.treew_evidence.headerItem().setText(1, _translate("panelUI", "Address"))
         self.treew_evidence.headerItem().setText(2, _translate("panelUI", "Type"))
-        __sortingEnabled = self.treew_evidence.isSortingEnabled()
-        self.treew_evidence.setSortingEnabled(False)
-        self.treew_evidence.topLevelItem(0).setText(0, _translate("panelUI", "Files dropped"))
-        self.treew_evidence.topLevelItem(0).child(0).setText(0, _translate("panelUI", "popo.exe"))
-        self.treew_evidence.topLevelItem(0).child(0).setText(1, _translate("panelUI", "67890"))
-        self.treew_evidence.topLevelItem(0).child(0).setText(2, _translate("panelUI", "BYTE"))
-        self.treew_evidence.topLevelItem(0).child(1).setText(0, _translate("panelUI", "pepe.exe"))
-        self.treew_evidence.topLevelItem(0).child(1).setText(1, _translate("panelUI", "2345"))
-        self.treew_evidence.topLevelItem(0).child(1).setText(2, _translate("panelUI", "ASCII"))
-        self.treew_evidence.setSortingEnabled(__sortingEnabled)
+        self.treew_evidence.headerItem().setText(3, _translate("panelUI", "Action"))
         self.cb_selectall.setText(_translate("panelUI", "Select All"))
         self.pb_go_evidence.setText(_translate("panelUI", "Go"))
         self.pb_comment_evidence.setText(_translate("panelUI", "Auto comment"))
         self.pb_search_other_files.setText(_translate("panelUI", "Search other files"))
         self.pb_search_options.setText(_translate("panelUI", "Search options"))
+        self.groupBox_11.setTitle(_translate("panelUI", "Behaviour actions:"))
         self.groupBox_10.setTitle(_translate("panelUI", "Used by the following code:"))
         item = self.tb_functions.horizontalHeaderItem(0)
         item.setText(_translate("panelUI", "Address"))

@@ -21,6 +21,7 @@ from virustotal.vtreport import VTReport
 from virustotal.vt_ida.ui.panel import Ui_panelUI
 from virustotal import vtevidence
 from virustotal import defaults
+from virustotal.vt_ida.disassembler import NavigateDisassembler
 from datetime import datetime
 from math import ceil
 import logging
@@ -479,7 +480,7 @@ class VTPanel(PluginForm):
       'Calls highlighted', 'Processes created', 'Mutexes created', 'Mutexes opened', 'Text highlighted', 'Modules loaded',
       'Reg. keys opened','Reg. keys deleted', 'Processes injected', 'Services opened', 'Processes killed', 'Services created',
       'Services started','Services stopped','Services deleted','Windows searched','Windows hidden', 'Crypto alg. observed',
-      'Crypto keys','Crypto plain texct','Text decoded','JA3 digests', 'Modules loaded'):
+      'Crypto keys','Crypto plain texct','Text decoded','JA3 digests'):
         self.panel.tw_behaviour.setColumnCount(1)
         self.panel.tw_behaviour.setHorizontalHeaderLabels(['Name'])
         i = 0 
@@ -589,6 +590,7 @@ class VTPanel(PluginForm):
     if tags_len:
       rows = ceil(tags_len / 4)
       self.panel.tw_tags.setRowCount(rows)
+      #self.panel.tw_tags.setShowGrid(False)
       row = 0
       i = 0
       while row < rows:
@@ -716,6 +718,60 @@ class VTPanel(PluginForm):
     #### Evidence Panel 
     #self.panel.tab_evidence.setEnabled(False)
     self.panel.pb_search_code.clicked.connect(self.__search_evidence)
+    self.panel.pb_go_evidence.clicked.connect(self.__go_to_evidence)
+    self.panel.treew_evidence.itemSelectionChanged.connect(self.__evidence_selected)
+
+  def __evidence_selected(self):
+    evidence = self.panel.treew_evidence.selectedItems()
+    self.panel.tw_behaviour_actions.clear()
+    self.panel.tw_behaviour_actions.setRowCount(0)
+    #self.panel.tw_behaviour_actions.setShowGrid(False)
+    
+    if evidence:
+      baseNode = evidence[0]
+      str_evidence = baseNode.text(0)
+      str_addr = baseNode.text(1)
+      list_uniqueactions = set()
+
+      # Look for str_evidence in every sandbox/action obtained from VT
+      if str_addr and self.vt_report.list_sandboxes():
+        sb_names=list(self.vt_report.list_sandboxes())
+        for sb_name in sb_names:
+          sb_actions_dict=self.vt_report.get_sandbox_report(sb_name)
+          sb_actions_keys = list(sb_actions_dict.keys())
+
+          for action in sb_actions_keys:
+            list_actions = sb_actions_dict[action]
+            num_actions=len(list_actions)
+            i = 0 
+            if num_actions:
+              while num_actions and (i < num_actions):
+                value = list_actions[i]   
+                if str_evidence in value:
+                  list_uniqueactions.add(action)
+                i = i + 1 
+      
+      if list_uniqueactions:
+        num_actions = len(list_uniqueactions)
+        rows = ceil(num_actions / 3)
+        self.panel.tw_behaviour_actions.setRowCount(rows)
+        row = 0
+        column = 0
+        for text in list_uniqueactions:
+            self.panel.tw_behaviour_actions.setItem(row, column, QtWidgets.QTableWidgetItem(text))        
+            column = column + 1
+            if column == 3:
+              row = row + 1 
+              column = 0
+      self.panel.tw_behaviour_actions.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+      self.panel.tw_behaviour_actions.resizeColumnsToContents()
+
+  def __go_to_evidence(self):
+    evidence = self.panel.treew_evidence.selectedItems()
+    if evidence:
+        baseNode = evidence[0]
+        str_ea = baseNode.text(1)
+        NavigateDisassembler.go_to_ea(str_ea)
 
   def __search_evidence(self):
     flags = defaults.FLAG_SEARCH_ASCII | defaults.FLAG_SEARCH_BYTES  | defaults.FLAG_SEARCH_UTF16LE | defaults.FLAG_SEARCH_UTF8
@@ -797,18 +853,19 @@ class VTPanel(PluginForm):
       logging.info('[VT Panel] No evidence found.')
 
 
-  def showEvidenceGroup(self, list_evidence, source):
+  def showEvidenceGroup(self, list_evidence, group):
       root = QtWidgets.QTreeWidgetItem(self.panel.treew_evidence)
-      root.setText(0, source)
+      root.setText(0, group)
       for evidence in list_evidence:
         list_addr = evidence['addresses']
         for addr in list_addr:
           item = QtWidgets.QTreeWidgetItem(root)
           item.setText(0, evidence['content'])
           addre = addr['addr']
-          hex_addr = '0x' + hex(addre)
-          item.setText(1, hex_addr)
+          item.setText(1, hex(addre))
           item.setText(2, evidence['format'])
+          if evidence['action']:
+            item.setText(3, evidence['action'])
 
   def showEvidence(self):
     list_filenames = []
@@ -818,31 +875,38 @@ class VTPanel(PluginForm):
     list_behaviour = []
 
     for evidence in self.vt_evidence.evidence_idb:
-      if evidence['source'] == 'file names submitted':
+      if evidence['group'] == 'file names':
         list_filenames.append(evidence)
-      if evidence['source'] == 'dropped files':
+      if evidence['group'] == 'dropped':
         list_dropped.append(evidence)
-      if evidence['source'] in ('embedded domains', 'embedded IPs', 'embedded URLs'):
+      if evidence['group'] == 'embedded':
         list_embedded.append(evidence)
-      if evidence['source'] in ('contacted domains', 'contacted IPs', 'contacted URLs'):
+      if evidence['group'] == 'contacted':
         list_contacted.append(evidence)
-      if evidence['source'] == 'behaviour':
+      if evidence['group'] == 'behaviour':
         list_behaviour.append(evidence)
 
     if list_filenames:
       self.showEvidenceGroup(list_filenames, 'File names')
 
     if list_dropped:
-      self.showEvidenceGroup(list_dropped, 'Dropped files')
+      self.showEvidenceGroup(list_dropped, 'Dropped')
 
     if list_embedded:
-      self.showEvidenceGroup(list_embedded, 'Embedded observables')
+      self.showEvidenceGroup(list_embedded, 'Embedded')
 
     if list_contacted:
-      self.showEvidenceGroup(list_contacted, 'Contacted observables')
+      self.showEvidenceGroup(list_contacted, 'Contacted')
 
     if list_behaviour:
-      self.showEvidenceGroup(list_behaviour, 'Behaviour')
+      sb_keys=list(self.vt_report.list_sandboxes())
+      for key in sb_keys:
+        list_sandbox = []
+        for evidence in list_behaviour:
+          if key == evidence['source']:
+            list_sandbox.append(evidence)
+        if list_sandbox:
+          self.showEvidenceGroup(list_sandbox, key)
 
 
   def OnClose(self, form):
