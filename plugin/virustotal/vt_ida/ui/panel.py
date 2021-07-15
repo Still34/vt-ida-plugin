@@ -243,13 +243,13 @@ class Ui_panelUI(object):
 "\n"
 "    border-image: none;\n"
 "    outline: 0;\n"
-"\n"
 "}\n"
 "\n"
 "QTableWidget::item\n"
 "{\n"
 "  border: 0px;\n"
 "  padding: 5px;\n"
+"Background-color:#3A4EFF;color:#FFFFFF;\n"
 "}")
         self.tw_tags.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tw_tags.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -675,13 +675,13 @@ class Ui_panelUI(object):
 "\n"
 "    border-image: none;\n"
 "    outline: 0;\n"
-"\n"
 "}\n"
 "\n"
 "QTableWidget::item\n"
 "{\n"
 "  border: 0px;\n"
 "  padding: 5px;\n"
+"Background-color:#3A4EFF;color:#FFFFFF;\n"
 "}")
         self.tw_behaviour_actions.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tw_behaviour_actions.setProperty("showDropIndicator", False)

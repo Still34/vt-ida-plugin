@@ -720,13 +720,15 @@ class VTPanel(PluginForm):
     self.panel.pb_search_code.clicked.connect(self.__search_evidence)
     self.panel.pb_go_evidence.clicked.connect(self.__go_to_evidence)
     self.panel.treew_evidence.itemSelectionChanged.connect(self.__evidence_selected)
+    self.panel.treew_evidence.horizontalHeader().setStyleSheet(header_stylesheet)
+    self.panel.tb_functions.horizontalHeader().setStyleSheet(header_stylesheet)
 
   def __evidence_selected(self):
     evidence = self.panel.treew_evidence.selectedItems()
     self.panel.tw_behaviour_actions.clear()
     self.panel.tw_behaviour_actions.setRowCount(0)
     #self.panel.tw_behaviour_actions.setShowGrid(False)
-    
+
     if evidence:
       baseNode = evidence[0]
       str_evidence = baseNode.text(0)
@@ -848,12 +850,12 @@ class VTPanel(PluginForm):
     logging.debug('[VT Panel] Search results: %s', self.vt_evidence.evidence_idb)
 
     if self.vt_evidence.evidence_idb:
-      self.showEvidence()
+      self.__showEvidence()
     else:
       logging.info('[VT Panel] No evidence found.')
 
 
-  def showEvidenceGroup(self, list_evidence, group):
+  def __showEvidenceGroup(self, list_evidence, group):
       root = QtWidgets.QTreeWidgetItem(self.panel.treew_evidence)
       root.setText(0, group)
       for evidence in list_evidence:
@@ -867,7 +869,7 @@ class VTPanel(PluginForm):
           if evidence['action']:
             item.setText(3, evidence['action'])
 
-  def showEvidence(self):
+  def __showEvidence(self):
     list_filenames = []
     list_dropped = []
     list_embedded = []
@@ -887,16 +889,16 @@ class VTPanel(PluginForm):
         list_behaviour.append(evidence)
 
     if list_filenames:
-      self.showEvidenceGroup(list_filenames, 'File names')
+      self.__showEvidenceGroup(list_filenames, 'File names')
 
     if list_dropped:
-      self.showEvidenceGroup(list_dropped, 'Dropped')
+      self.__showEvidenceGroup(list_dropped, 'Dropped')
 
     if list_embedded:
-      self.showEvidenceGroup(list_embedded, 'Embedded')
+      self.__showEvidenceGroup(list_embedded, 'Embedded')
 
     if list_contacted:
-      self.showEvidenceGroup(list_contacted, 'Contacted')
+      self.__showEvidenceGroup(list_contacted, 'Contacted')
 
     if list_behaviour:
       sb_keys=list(self.vt_report.list_sandboxes())
@@ -906,7 +908,7 @@ class VTPanel(PluginForm):
           if key == evidence['source']:
             list_sandbox.append(evidence)
         if list_sandbox:
-          self.showEvidenceGroup(list_sandbox, key)
+          self.__showEvidenceGroup(list_sandbox, key)
 
 
   def OnClose(self, form):
